@@ -1,0 +1,53 @@
+diff --git a/lib/dictBuilder/zdict.c b/lib/dictBuilder/zdict.c
+index 2024e0b..ec45714 100644
+--- a/lib/dictBuilder/zdict.c
++++ b/lib/dictBuilder/zdict.c
+@@ -878,9 +878,6 @@ size_t ZDICT_finalizeDictionary(void* dictBuffer, size_t dictBufferCapacity,
+ 
+     /* check conditions */
+     DEBUGLOG(4, "ZDICT_finalizeDictionary");
+-    if (dictBufferCapacity < dictContentSize) return ERROR(dstSize_tooSmall);
+-    if (dictContentSize < ZDICT_CONTENTSIZE_MIN) return ERROR(srcSize_wrong);
+-    if (dictBufferCapacity < ZDICT_DICTSIZE_MIN) return ERROR(dstSize_tooSmall);
+ 
+     /* dictionary header */
+     MEM_writeLE32(header, ZSTD_MAGIC_DICTIONARY);
+@@ -968,8 +965,6 @@ size_t ZDICT_trainFromBuffer_unsafe_legacy(
+ 
+     /* checks */
+     if (!dictList) return ERROR(memory_allocation);
+-    if (maxDictSize < ZDICT_DICTSIZE_MIN) { free(dictList); return ERROR(dstSize_tooSmall); }   /* requested dictionary size is too small */
+-    if (samplesBuffSize < ZDICT_MIN_SAMPLES_SIZE) { free(dictList); return ERROR(dictionaryCreation_failed); }   /* not enough source to create dictionary */
+ 
+     /* init */
+     ZDICT_initDictItem(dictList);
+@@ -1002,7 +997,6 @@ size_t ZDICT_trainFromBuffer_unsafe_legacy(
+ 
+     /* create dictionary */
+     {   U32 dictContentSize = ZDICT_dictSize(dictList);
+-        if (dictContentSize < ZDICT_CONTENTSIZE_MIN) { free(dictList); return ERROR(dictionaryCreation_failed); }   /* dictionary content too small */
+         if (dictContentSize < targetDictSize/4) {
+             DISPLAYLEVEL(2, "!  warning : selected content significantly smaller than requested (%u < %u) \n", dictContentSize, (U32)maxDictSize);
+             if (samplesBuffSize < 10 * targetDictSize)
+diff --git a/lib/dictBuilder/zdict.h b/lib/dictBuilder/zdict.h
+index ad459c2..60cce44 100644
+--- a/lib/dictBuilder/zdict.h
++++ b/lib/dictBuilder/zdict.h
+@@ -62,8 +62,6 @@ ZDICTLIB_API const char* ZDICT_getErrorName(size_t errorCode);
+ 
+ 
+ 
+-#ifdef ZDICT_STATIC_LINKING_ONLY
+-
+ /* ====================================================================================
+  * The definitions in this section are considered experimental.
+  * They should never be used with a dynamic library, as they may change in the future.
+@@ -203,8 +201,6 @@ size_t ZDICT_addEntropyTablesFromBuffer(void* dictBuffer, size_t dictContentSize
+                                   const void* samplesBuffer, const size_t* samplesSizes, unsigned nbSamples);
+ 
+ 
+-#endif   /* ZDICT_STATIC_LINKING_ONLY */
+-
+ #if defined (__cplusplus)
+ }
+ #endif
